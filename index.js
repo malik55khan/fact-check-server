@@ -83,7 +83,9 @@ app.post("/factcheck", async (req, res) => {
   res.json({ text: factResponse });
 });
 
-app.get("/", (req, res) => {});
+app.get("/", (req, res) => {
+  res.json({status:"api server working"})
+});
 
 app.listen(3000, () => {
   console.log("Express server initialized");
