@@ -80,7 +80,7 @@ app.post("/factcheck", async (req, res) => {
   console.log("Final Prompt: ", promptWithSnippet);
   const factResponse = await main(promptWithSnippet, promptWithSelectedText);
   console.log("Response From ChtatGPT", factResponse);
-  res.json({ text: factResponse });
+  res.json({ text: factResponse, input:promptWithSnippet, googleSearch: googleSearchSnippets });
 });
 
 app.get("/", (req, res) => {
