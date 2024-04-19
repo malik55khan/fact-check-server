@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import { prompt } from "./prompt.js";
 import fetch from 'node-fetch'; 
 import dotenv from 'dotenv'
+import { link } from "fs";
 const app = express();
 app.use(bodyParser.json());
 dotenv.config()
@@ -53,12 +54,12 @@ async function googleSearch(selectedText) {
     const snippetText = results
       .map((result, index) => {
         return `
-            source ${index}:  ${result.snippet} 
+            source ${index+1}:  ${result.snippet} 
             link: ${result.link}
           `;
       })
       .join("\n");
-    return snippetText;
+    return {snippetText,results};
   } catch (error) {
     console.error(error);
     // Handle error appropriately, or re-throw if necessary
@@ -67,7 +68,12 @@ async function googleSearch(selectedText) {
 app.post("/factcheck", async (req, res) => {
   console.log("Selected Text:", req.body.selectedText);
 
-  const googleSearchSnippets = await googleSearch(req.body.selectedText);
+  const {snippetText,results} = await googleSearch(req.body.selectedText);
+  let answer="Answer: ",source="",count=1;
+  for(let result of results){
+    answer+=`${result.snippet}\n\n`
+    source+=`Source ${count++}: ${result.link}\n`
+  }
   const promptWithSelectedText = prompt.replace(
     "{text}",
     req.body.selectedText,
@@ -75,12 +81,12 @@ app.post("/factcheck", async (req, res) => {
   // console.log("prompt", promptWithSelectedText);
   const promptWithSnippet = promptWithSelectedText.replace(
     "{google_snippet}",
-    googleSearchSnippets,
+    answer+source,
   );
   console.log("Final Prompt: ", promptWithSnippet);
   const factResponse = await main(promptWithSnippet, promptWithSelectedText);
   console.log("Response From ChtatGPT", factResponse);
-  res.json({ text: factResponse, input:promptWithSnippet, googleSearch: googleSearchSnippets });
+  res.json({ text: factResponse, input:promptWithSnippet, googleSearch: snippetText });
 });
 
 app.get("/", (req, res) => {
