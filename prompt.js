@@ -1,5 +1,4 @@
-export const prompt = `
-You are a fact checker: Any answer which you output must be in the form of:
+export const prompt = `You are a fact checker: Any answer which you output must be in the form of:
 
 
 
