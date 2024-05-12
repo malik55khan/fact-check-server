@@ -38,18 +38,17 @@ async function main(promptWithSnippet, promptWithSelectedText) {
   }
 }
 // google search response
-async function googleSearch(selectedText) {
+async function googleSearch (selectedText, pageUrl) {
   try {
     const cseId = process.env["ENGINE_ID"];
     const apiKey = process.env["ENGINE_API_KEY"];
     const searchTerm = selectedText;
-    console.log(apiKey)
     const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cseId}&q=${searchTerm}`;
-
     const response = await fetch(url);
     const data = await response.json();
 
-    const results = data.items.slice(0, 3); // Get first 3 results
+    let results = data.items.slice(0, 5); // Get first 5 results
+    results = (results.filter(x => x.link !== pageUrl)).slice(0, 3) //Skipping link if list has page url and then getting 3 results
     // Process the results (title, snippet, link)
     const snippetText = results
       .map((result, index) => {
@@ -66,9 +65,10 @@ async function googleSearch(selectedText) {
   }
 }
 app.post("/factcheck", async (req, res) => {
-  console.log("Selected Text:", req.body.selectedText);
-
-  const {snippetText,results} = await googleSearch(req.body.selectedText);
+//  console.log("Selected Text:", req.body);
+  const { selectionText,pageUrl} = req.body;
+  const { snippetText, results } = await googleSearch(selectionText, pageUrl);
+  //console.log(snippetText)
   let answer="Answer: ",source="",count=1;
   for(let result of results){
     answer+=`${result.snippet}\n\n`
@@ -76,7 +76,7 @@ app.post("/factcheck", async (req, res) => {
   }
   const promptWithSelectedText = prompt.replace(
     "{text}",
-    req.body.selectedText,
+    selectionText,
   );
   // console.log("prompt", promptWithSelectedText);
   const promptWithSnippet = promptWithSelectedText.replace(
